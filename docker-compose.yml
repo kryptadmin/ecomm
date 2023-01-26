@@ -1,0 +1,58 @@
+version: "3.8"
+
+services:
+  database:
+    image: postgres:latest
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - db:/var/lib/postgresql/data/pgdata
+    expose:
+      - 5432
+    container_name: database
+
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    ports:
+      - 8082:8000
+    links:
+      - database:database
+    depends_on:
+      - database
+    restart: always
+
+  application:
+    build:
+      context: ./practise
+      dockerfile: Dockerfile
+    container_name: application
+    volumes:
+      - ./practise:/usr/src/app
+    env_file:
+      - .env
+    expose:
+      - 8080
+    links:
+      - database:database
+    depends_on:
+      - database
+    restart: always
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nginx
+    restart: always
+    ports:
+      - 80:80
+    links:
+      - application:application
+    depends_on:
+      - database
+      - application
+
+volumes:
+  db:
